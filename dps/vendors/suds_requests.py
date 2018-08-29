@@ -31,22 +31,13 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
-
 """
-from __future__ import unicode_literals
-
 import functools
 import requests
 import suds.transport as transport
 import traceback
 
-try:
-    import cStringIO as StringIO
-except ImportError:
-    try:
-        import StringIO
-    except ImportError:
-        from io import StringIO
+from six import BytesIO
 
 
 __all__ = ['RequestsTransport']
@@ -58,14 +49,18 @@ def handle_errors(f):
         try:
             return f(*args, **kwargs)
         except requests.HTTPError as e:
+            buf = BytesIO(e.response.content)
             raise transport.TransportError(
                 'Error in requests\n' + traceback.format_exc(),
                 e.response.status_code,
+                buf,
             )
         except requests.RequestException:
+            buf = BytesIO(traceback.format_exc().encode('utf-8'))
             raise transport.TransportError(
                 'Error in requests\n' + traceback.format_exc(),
-                000
+                000,
+                buf,
             )
     return wrapper
 
@@ -78,7 +73,8 @@ class RequestsTransport(transport.Transport):
     @handle_errors
     def open(self, request):
         resp = self._session.get(request.url)
-        return StringIO.StringIO(resp.content)
+        resp.raise_for_status()
+        return BytesIO(resp.content)
 
     @handle_errors
     def send(self, request):
@@ -87,6 +83,9 @@ class RequestsTransport(transport.Transport):
             data=request.message,
             headers=request.headers,
         )
+        if resp.headers.get('content-type') not in ('text/xml',
+                                                    'application/soap+xml'):
+            resp.raise_for_status()
         return transport.Reply(
             resp.status_code,
             resp.headers,
