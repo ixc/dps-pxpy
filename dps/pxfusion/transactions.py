@@ -30,6 +30,8 @@ class PxFusionGetTransaction(txn.BaseTransaction):
     # https://www.paymentexpress.com/Technical_Resources/Ecommerce_NonHosted/PxFusion#enableaddbillcard
     enable_add_bill_card = txn.BooleanField()
 
+    enable_mandatory_cvc2 = txn.BooleanField()
+
     # https://www.paymentexpress.com/Technical_Resources/Ecommerce_NonHosted/PxFusion#avsAction
     avs_action = txn.IntegerField(choices=txn.AVS_CHOICES)
 
