@@ -9,13 +9,6 @@ from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 
-# From https://discuss.frappe.io/t/pip-major-change-on-version-10/724
-try:  # for pip >= 10
-    from pip._internal.req import parse_requirements
-except ImportError:  # for pip <= 9.0.3
-    from pip.req import parse_requirements
-
-
 class Tox(TestCommand):
 
     def finalize_options(self):
@@ -54,7 +47,11 @@ setup(
     url="https://github.com/OohlaLabs/dps-pxpy/",
     packages=find_packages(),
     package_dir={'dps': 'dps'},
-    install_requires=[str(ir.req) for ir in parse_requirements("requirements.txt", session=uuid.uuid1())],
+    install_requires=[
+        "requests>=2.2.0",
+        "suds-jurko>=0.5",
+        "six>=1.5",
+    ],
     tests_require=["tox"],
     cmdclass={"test": Tox},
     license="MIT",
